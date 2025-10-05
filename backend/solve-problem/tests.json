@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": "",
+      "bodyMatcher": "exact"
+    },
+    {
+      "name": "Test POST with valid question",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "question": "Реши уравнение x + 2 = 5"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "answer": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test POST with empty question",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "question": ""
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
