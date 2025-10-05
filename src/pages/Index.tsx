@@ -31,6 +31,16 @@ interface Patient {
   recommendations?: string;
 }
 
+interface Doctor {
+  id: number;
+  name: string;
+  specialty: string;
+  experience: string;
+  patients: number;
+  schedule: string;
+  rating: number;
+}
+
 const newPatientsPool: Omit<Patient, 'id' | 'status'>[] = [
   {
     fullName: 'Кузнецова Ольга Викторовна',
@@ -94,7 +104,18 @@ const newPatientsPool: Omit<Patient, 'id' | 'status'>[] = [
   }
 ];
 
+const doctors: Doctor[] = [
+  { id: 1, name: 'Смирнов Андрей Викторович', specialty: 'Терапевт', experience: '12 лет', patients: 1250, schedule: 'Пн-Пт 9:00-18:00', rating: 4.8 },
+  { id: 2, name: 'Козлова Елена Дмитриевна', specialty: 'Кардиолог', experience: '15 лет', patients: 980, schedule: 'Пн-Ср 10:00-17:00', rating: 4.9 },
+  { id: 3, name: 'Новикова Ольга Александровна', specialty: 'Педиатр', experience: '8 лет', patients: 1560, schedule: 'Вт-Сб 9:00-16:00', rating: 4.7 },
+  { id: 4, name: 'Волков Сергей Петрович', specialty: 'Ортопед', experience: '18 лет', patients: 820, schedule: 'Ср-Пт 11:00-19:00', rating: 4.9 },
+  { id: 5, name: 'Лебедева Мария Сергеевна', specialty: 'Дерматолог', experience: '10 лет', patients: 1100, schedule: 'Пн-Чт 10:00-18:00', rating: 4.6 },
+  { id: 6, name: 'Федоров Алексей Иванович', specialty: 'Стоматолог', experience: '14 лет', patients: 1380, schedule: 'Пн-Пт 8:00-20:00', rating: 4.8 },
+  { id: 7, name: 'Павлова Анна Сергеевна', specialty: 'ЛОР', experience: '9 лет', patients: 950, schedule: 'Вт-Сб 9:00-17:00', rating: 4.7 }
+];
+
 const Index = () => {
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedAppointment, setSelectedAppointment] = useState<Patient | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [nextPatientIndex, setNextPatientIndex] = useState(0);
@@ -226,11 +247,11 @@ const Index = () => {
 
   const getStatusBadge = (status: AppointmentStatus) => {
     const statusConfig = {
-      pending: { label: 'Новая', variant: 'default' as const, color: 'bg-gradient-to-r from-blue-500 to-blue-600' },
-      accepted: { label: 'Принята', variant: 'secondary' as const, color: 'bg-gradient-to-r from-green-500 to-green-600' },
-      'in-progress': { label: 'На приёме', variant: 'default' as const, color: 'bg-gradient-to-r from-yellow-500 to-orange-500' },
-      completed: { label: 'Завершена', variant: 'outline' as const, color: 'bg-gradient-to-r from-gray-500 to-gray-600' },
-      rejected: { label: 'Отклонена', variant: 'destructive' as const, color: 'bg-gradient-to-r from-red-500 to-red-600' }
+      pending: { label: 'Новая', color: 'bg-blue-500' },
+      accepted: { label: 'Принята', color: 'bg-green-500' },
+      'in-progress': { label: 'На приёме', color: 'bg-yellow-500' },
+      completed: { label: 'Завершена', color: 'bg-gray-500' },
+      rejected: { label: 'Отклонена', color: 'bg-red-500' }
     };
     const config = statusConfig[status];
     return <Badge className={`${config.color} text-white border-0`}>{config.label}</Badge>;
@@ -252,506 +273,745 @@ const Index = () => {
     return matchesStatus && matchesSearch;
   });
 
+  const navItems = [
+    { id: 'dashboard', label: 'Главная', icon: 'LayoutDashboard' },
+    { id: 'appointments', label: 'Записи', icon: 'ClipboardList' },
+    { id: 'doctors', label: 'Врачи', icon: 'Users' },
+    { id: 'statistics', label: 'Статистика', icon: 'BarChart3' }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <header className="bg-white/80 backdrop-blur-xl border-b shadow-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Icon name="Heart" className="w-7 h-7 text-white" />
+              <div className="w-11 h-11 bg-red-600 rounded-lg flex items-center justify-center shadow-md relative">
+                <div className="absolute w-6 h-1.5 bg-white rounded-full"></div>
+                <div className="absolute w-1.5 h-6 bg-white rounded-full"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  МедЦентр Плюс
-                </h1>
-                <p className="text-sm text-gray-500">Система управления записями</p>
+                <h1 className="text-xl font-bold text-gray-900">МедЦентр Плюс</h1>
+                <p className="text-sm text-gray-500">Система управления</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-blue-50">
-                    <Avatar className="w-9 h-9 ring-2 ring-blue-500">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={activeSection === item.id ? 'default' : 'ghost'}
+                  onClick={() => setActiveSection(item.id)}
+                  className={activeSection === item.id ? 'bg-red-600' : ''}
+                >
+                  <Icon name={item.icon as any} className="w-4 h-4 mr-2" />
+                  {item.label}
+                </Button>
+              ))}
+            </nav>
+
+            <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <Avatar className="w-9 h-9 ring-2 ring-red-500">
+                    <AvatarFallback className="bg-red-600 text-white font-bold">
+                      ДМ
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden lg:block text-left">
+                    <p className="text-sm font-semibold text-gray-900">Директор</p>
+                    <p className="text-xs text-gray-500">Михайлов Д.А.</p>
+                  </div>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">Профиль директора</DialogTitle>
+                  <DialogDescription>
+                    Общая информация и статистика работы
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-6 p-6 bg-gradient-to-r from-red-600 to-red-700 rounded-xl text-white">
+                    <Avatar className="w-24 h-24 ring-4 ring-white/50">
+                      <AvatarFallback className="bg-white/20 text-white text-3xl font-bold">
                         ДМ
                       </AvatarFallback>
                     </Avatar>
-                    <div className="hidden md:block text-left">
-                      <p className="text-sm font-semibold text-gray-900">Директор</p>
-                      <p className="text-xs text-gray-500">Михайлов Д.А.</p>
-                    </div>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl">Профиль директора</DialogTitle>
-                    <DialogDescription>
-                      Общая информация и статистика работы
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-6">
-                    <div className="flex items-center space-x-6 p-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white">
-                      <Avatar className="w-24 h-24 ring-4 ring-white/50">
-                        <AvatarFallback className="bg-white/20 text-white text-3xl font-bold">
-                          ДМ
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-bold">Дмитрий Анатольевич Михайлов</h3>
-                        <p className="text-blue-100 text-lg">Директор медицинского центра</p>
-                        <div className="flex items-center space-x-4 mt-2 text-sm">
-                          <span className="flex items-center">
-                            <Icon name="Briefcase" className="w-4 h-4 mr-1" />
-                            Стаж: 15 лет
-                          </span>
-                          <span className="flex items-center">
-                            <Icon name="Award" className="w-4 h-4 mr-1" />
-                            Врач высшей категории
-                          </span>
-                        </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold">Дмитрий Анатольевич Михайлов</h3>
+                      <p className="text-red-100 text-lg">Директор медицинского центра</p>
+                      <div className="flex items-center space-x-4 mt-2 text-sm">
+                        <span className="flex items-center">
+                          <Icon name="Briefcase" className="w-4 h-4 mr-1" />
+                          Стаж: 15 лет
+                        </span>
+                        <span className="flex items-center">
+                          <Icon name="Award" className="w-4 h-4 mr-1" />
+                          Врач высшей категории
+                        </span>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <Card className="border-blue-200 bg-blue-50">
-                        <CardHeader className="pb-3">
-                          <CardDescription className="text-blue-600">Сегодня принято</CardDescription>
-                          <CardTitle className="text-3xl text-blue-700">{stats.accepted + stats.inProgress}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                      <Card className="border-green-200 bg-green-50">
-                        <CardHeader className="pb-3">
-                          <CardDescription className="text-green-600">Завершено</CardDescription>
-                          <CardTitle className="text-3xl text-green-700">{stats.completed}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                      <Card className="border-yellow-200 bg-yellow-50">
-                        <CardHeader className="pb-3">
-                          <CardDescription className="text-yellow-600">В очереди</CardDescription>
-                          <CardTitle className="text-3xl text-yellow-700">{stats.pending}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                      <Card className="border-purple-200 bg-purple-50">
-                        <CardHeader className="pb-3">
-                          <CardDescription className="text-purple-600">Всего записей</CardDescription>
-                          <CardTitle className="text-3xl text-purple-700">{stats.total}</CardTitle>
-                        </CardHeader>
-                      </Card>
-                    </div>
-
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <Icon name="TrendingUp" className="w-5 h-5 mr-2 text-blue-600" />
-                          Эффективность работы
-                        </CardTitle>
+                      <CardHeader className="pb-3">
+                        <CardDescription>Принято</CardDescription>
+                        <CardTitle className="text-3xl text-red-600">{stats.accepted + stats.inProgress}</CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-600">Обработано заявок</span>
-                            <span className="font-semibold">{Math.round((stats.accepted + stats.completed) / stats.total * 100)}%</span>
-                          </div>
-                          <Progress value={(stats.accepted + stats.completed) / stats.total * 100} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-600">Завершённые приёмы</span>
-                            <span className="font-semibold">{Math.round(stats.completed / stats.total * 100)}%</span>
-                          </div>
-                          <Progress value={stats.completed / stats.total * 100} className="h-2" />
-                        </div>
-                      </CardContent>
                     </Card>
-
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <Icon name="Users" className="w-5 h-5 mr-2 text-purple-600" />
-                          Контактная информация
-                        </CardTitle>
+                      <CardHeader className="pb-3">
+                        <CardDescription>Завершено</CardDescription>
+                        <CardTitle className="text-3xl text-green-600">{stats.completed}</CardTitle>
                       </CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-gray-600">Email</Label>
-                          <p className="font-medium">d.mikhailov@medcenter.ru</p>
-                        </div>
-                        <div>
-                          <Label className="text-gray-600">Телефон</Label>
-                          <p className="font-medium">+7 (495) 123-45-67</p>
-                        </div>
-                        <div>
-                          <Label className="text-gray-600">Внутренний номер</Label>
-                          <p className="font-medium">101</p>
-                        </div>
-                        <div>
-                          <Label className="text-gray-600">Кабинет</Label>
-                          <p className="font-medium">Административный корпус, 3 этаж</p>
-                        </div>
-                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardDescription>В очереди</CardDescription>
+                        <CardTitle className="text-3xl text-yellow-600">{stats.pending}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardDescription>Всего</CardDescription>
+                        <CardTitle className="text-3xl text-gray-600">{stats.total}</CardTitle>
+                      </CardHeader>
                     </Card>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Icon name="TrendingUp" className="w-5 h-5 mr-2 text-red-600" />
+                        Эффективность работы
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Обработано заявок</span>
+                          <span className="font-semibold">{Math.round((stats.accepted + stats.completed) / stats.total * 100)}%</span>
+                        </div>
+                        <Progress value={(stats.accepted + stats.completed) / stats.total * 100} className="h-2" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Завершённые приёмы</span>
+                          <span className="font-semibold">{Math.round(stats.completed / stats.total * 100)}%</span>
+                        </div>
+                        <Progress value={stats.completed / stats.total * 100} className="h-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
 
+      <div className="md:hidden bg-white border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex overflow-x-auto py-2 space-x-2">
+            {navItems.map((item) => (
+              <Button
+                key={item.id}
+                variant={activeSection === item.id ? 'default' : 'ghost'}
+                onClick={() => setActiveSection(item.id)}
+                className={`flex-shrink-0 ${activeSection === item.id ? 'bg-red-600' : ''}`}
+                size="sm"
+              >
+                <Icon name={item.icon as any} className="w-4 h-4 mr-2" />
+                {item.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Панель управления
-          </h2>
-          <p className="text-gray-600">Управление записями пациентов на приём</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-gray-50">
-            <CardHeader className="pb-3">
-              <CardDescription>Всего записей</CardDescription>
-              <CardTitle className="text-4xl bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
-                {stats.total}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center text-sm text-gray-600">
-                <Icon name="Calendar" className="w-4 h-4 mr-1" />
-                Сегодня
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100 animate-fade-in">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-blue-700">Новые заявки</CardDescription>
-              <CardTitle className="text-4xl text-blue-600">{stats.pending}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center text-sm text-blue-600">
-                <Icon name="Clock" className="w-4 h-4 mr-1 animate-pulse" />
-                Ожидают
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-green-700">Принято</CardDescription>
-              <CardTitle className="text-4xl text-green-600">{stats.accepted}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center text-sm text-green-600">
-                <Icon name="CheckCircle" className="w-4 h-4 mr-1" />
-                Подтверждено
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-yellow-50 to-orange-100">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-orange-700">На приёме</CardDescription>
-              <CardTitle className="text-4xl text-orange-600">{stats.inProgress}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center text-sm text-orange-600">
-                <Icon name="Activity" className="w-4 h-4 mr-1" />
-                В процессе
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 to-purple-100">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-purple-700">Завершено</CardDescription>
-              <CardTitle className="text-4xl text-purple-600">{stats.completed}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center text-sm text-purple-600">
-                <Icon name="CheckCheck" className="w-4 h-4 mr-1" />
-                Выполнено
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mb-6 border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
-            <CardTitle className="flex items-center">
-              <Icon name="Search" className="w-5 h-5 mr-2 text-blue-600" />
-              Фильтры и поиск
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Icon name="Search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Поиск по ФИО, врачу или специальности..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
-                />
-              </div>
-              <Tabs value={filterStatus} onValueChange={setFilterStatus} className="w-full md:w-auto">
-                <TabsList className="bg-gray-100">
-                  <TabsTrigger value="all">Все</TabsTrigger>
-                  <TabsTrigger value="pending">Новые</TabsTrigger>
-                  <TabsTrigger value="accepted">Принятые</TabsTrigger>
-                  <TabsTrigger value="in-progress">На приёме</TabsTrigger>
-                  <TabsTrigger value="completed">Завершённые</TabsTrigger>
-                </TabsList>
-              </Tabs>
+        {activeSection === 'dashboard' && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Панель управления</h2>
+              <p className="text-gray-600">Общая статистика по медицинскому центру</p>
             </div>
-          </CardContent>
-        </Card>
 
-        <div className="grid gap-4">
-          {filteredAppointments.map((appointment, index) => (
-            <Card 
-              key={appointment.id} 
-              className="border-0 shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-fade-in bg-white"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-xl text-gray-900">{appointment.fullName}</CardTitle>
-                      {appointment.isChild && (
-                        <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
-                          <Icon name="Baby" className="w-3 h-3 mr-1" />
-                          Ребёнок
-                        </Badge>
-                      )}
-                      {getStatusBadge(appointment.status)}
-                    </div>
-                    <CardDescription className="flex flex-wrap items-center gap-4 text-sm">
-                      <span className="flex items-center text-gray-600">
-                        <Icon name="User" className="w-4 h-4 mr-1 text-blue-500" />
-                        {appointment.doctor}
-                      </span>
-                      <span className="flex items-center text-gray-600">
-                        <Icon name="Stethoscope" className="w-4 h-4 mr-1 text-purple-500" />
-                        {appointment.specialty}
-                      </span>
-                      <span className="flex items-center text-gray-600">
-                        <Icon name="Calendar" className="w-4 h-4 mr-1 text-green-500" />
-                        {new Date(appointment.date).toLocaleDateString('ru-RU')} в {appointment.time}
-                      </span>
-                    </CardDescription>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardDescription>Всего записей</CardDescription>
+                  <CardTitle className="text-4xl text-gray-900">{stats.total}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Icon name="Calendar" className="w-4 h-4 mr-1" />
+                    Сегодня
                   </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setSelectedAppointment(appointment)}
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Icon name="Eye" className="w-4 h-4 mr-2" />
-                        Подробнее
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-xl">
-                          <Icon name="FileText" className="w-6 h-6 text-blue-600" />
-                          Карточка записи #{appointment.id}
-                          {getStatusBadge(appointment.status)}
-                        </DialogTitle>
-                        <DialogDescription>
-                          Полная информация о записи пациента
-                        </DialogDescription>
-                      </DialogHeader>
+                </CardContent>
+              </Card>
 
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="font-semibold mb-3 flex items-center text-gray-900 text-lg">
-                            <Icon name="User" className="w-5 h-5 mr-2 text-blue-600" />
-                            Данные пациента
-                          </h3>
-                          <div className="grid grid-cols-2 gap-4 bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-100">
-                            <div>
-                              <Label className="text-gray-600">ФИО</Label>
-                              <p className="font-medium text-gray-900">{appointment.fullName}</p>
-                            </div>
-                            <div>
-                              <Label className="text-gray-600">Паспорт</Label>
-                              <p className="font-medium text-gray-900">{appointment.passport}</p>
-                            </div>
-                            <div>
-                              <Label className="text-gray-600">Возраст</Label>
-                              <p className="font-medium text-gray-900">{appointment.age} {appointment.isChild ? 'лет' : 'года'}</p>
-                            </div>
-                            <div>
-                              <Label className="text-gray-600">Телефон</Label>
-                              <p className="font-medium text-gray-900">{appointment.phone}</p>
-                            </div>
-                            <div className="col-span-2">
-                              <Label className="text-gray-600">Категория</Label>
-                              <p className="font-medium text-gray-900">
-                                {appointment.isChild ? '👶 Детский приём' : '👤 Взрослый приём'}
-                              </p>
-                            </div>
-                          </div>
+              <Card className="hover:shadow-lg transition-shadow border-blue-100">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-blue-700">Новые заявки</CardDescription>
+                  <CardTitle className="text-4xl text-blue-600">{stats.pending}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-blue-600">
+                    <Icon name="Clock" className="w-4 h-4 mr-1" />
+                    Ожидают
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow border-green-100">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-green-700">Принято</CardDescription>
+                  <CardTitle className="text-4xl text-green-600">{stats.accepted}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-green-600">
+                    <Icon name="CheckCircle" className="w-4 h-4 mr-1" />
+                    Подтверждено
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow border-yellow-100">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-yellow-700">На приёме</CardDescription>
+                  <CardTitle className="text-4xl text-yellow-600">{stats.inProgress}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-yellow-600">
+                    <Icon name="Activity" className="w-4 h-4 mr-1" />
+                    В процессе
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow border-gray-200">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-gray-700">Завершено</CardDescription>
+                  <CardTitle className="text-4xl text-gray-600">{stats.completed}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Icon name="CheckCheck" className="w-4 h-4 mr-1" />
+                    Выполнено
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Icon name="Clock" className="w-5 h-5 mr-2 text-red-600" />
+                    Последние записи
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {appointments.slice(0, 5).map((apt) => (
+                      <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-gray-900">{apt.fullName}</p>
+                          <p className="text-xs text-gray-500">{apt.specialty} • {apt.time}</p>
                         </div>
-
-                        <Separator />
-
-                        <div>
-                          <h3 className="font-semibold mb-3 flex items-center text-gray-900 text-lg">
-                            <Icon name="Stethoscope" className="w-5 h-5 mr-2 text-purple-600" />
-                            Информация о приёме
-                          </h3>
-                          <div className="grid grid-cols-2 gap-4 bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-100">
-                            <div>
-                              <Label className="text-gray-600">Врач</Label>
-                              <p className="font-medium text-gray-900">{appointment.doctor}</p>
-                            </div>
-                            <div>
-                              <Label className="text-gray-600">Специальность</Label>
-                              <p className="font-medium text-gray-900">{appointment.specialty}</p>
-                            </div>
-                            <div>
-                              <Label className="text-gray-600">Дата</Label>
-                              <p className="font-medium text-gray-900">{new Date(appointment.date).toLocaleDateString('ru-RU')}</p>
-                            </div>
-                            <div>
-                              <Label className="text-gray-600">Время</Label>
-                              <p className="font-medium text-gray-900">{appointment.time}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        <div>
-                          <h3 className="font-semibold mb-3 flex items-center text-gray-900 text-lg">
-                            <Icon name="FileText" className="w-5 h-5 mr-2 text-yellow-600" />
-                            Жалобы пациента
-                          </h3>
-                          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 p-4 rounded-xl">
-                            <p className="text-gray-900 leading-relaxed">{appointment.complaints}</p>
-                          </div>
-                        </div>
-
-                        {appointment.diagnosis && (
-                          <>
-                            <Separator />
-                            <div>
-                              <h3 className="font-semibold mb-3 flex items-center text-gray-900 text-lg">
-                                <Icon name="Clipboard" className="w-5 h-5 mr-2 text-blue-600" />
-                                Диагноз
-                              </h3>
-                              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 p-4 rounded-xl">
-                                <p className="text-gray-900 leading-relaxed">{appointment.diagnosis}</p>
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {appointment.recommendations && (
-                          <>
-                            <Separator />
-                            <div>
-                              <h3 className="font-semibold mb-3 flex items-center text-gray-900 text-lg">
-                                <Icon name="Pill" className="w-5 h-5 mr-2 text-green-600" />
-                                Рекомендации
-                              </h3>
-                              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 p-4 rounded-xl">
-                                <p className="text-gray-900 leading-relaxed">{appointment.recommendations}</p>
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        <Separator />
-
-                        <div className="flex gap-2">
-                          {appointment.status === 'pending' && (
-                            <>
-                              <Button
-                                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg"
-                                onClick={() => updateAppointmentStatus(appointment.id, 'accepted')}
-                              >
-                                <Icon name="CheckCircle" className="w-4 h-4 mr-2" />
-                                Принять заявку
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg"
-                                onClick={() => updateAppointmentStatus(appointment.id, 'rejected')}
-                              >
-                                <Icon name="XCircle" className="w-4 h-4 mr-2" />
-                                Отклонить
-                              </Button>
-                            </>
-                          )}
-                          {appointment.status === 'accepted' && (
-                            <Button
-                              className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg"
-                              onClick={() => updateAppointmentStatus(appointment.id, 'in-progress')}
-                            >
-                              <Icon name="Activity" className="w-4 h-4 mr-2" />
-                              Начать приём
-                            </Button>
-                          )}
-                          {appointment.status === 'in-progress' && (
-                            <Button
-                              className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 shadow-lg"
-                              onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
-                            >
-                              <Icon name="CheckCheck" className="w-4 h-4 mr-2" />
-                              Завершить приём
-                            </Button>
-                          )}
-                          {appointment.status === 'completed' && (
-                            <div className="flex-1 text-center bg-gradient-to-r from-green-50 to-green-100 text-green-700 font-semibold py-3 rounded-lg border-2 border-green-300">
-                              <Icon name="CheckCheck" className="w-5 h-5 inline mr-2" />
-                              Приём завершён
-                            </div>
-                          )}
-                        </div>
+                        {getStatusBadge(apt.status)}
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Icon name="Users" className="w-5 h-5 mr-2 text-red-600" />
+                    Врачи на смене
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {doctors.slice(0, 5).map((doctor) => (
+                      <div key={doctor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="w-10 h-10">
+                            <AvatarFallback className="bg-red-100 text-red-700 font-semibold">
+                              {doctor.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-sm text-gray-900">{doctor.name}</p>
+                            <p className="text-xs text-gray-500">{doctor.specialty}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{doctor.experience}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {activeSection === 'appointments' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Управление записями</h2>
+              <p className="text-gray-600">Все записи пациентов на приём</p>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Icon name="Search" className="w-5 h-5 mr-2 text-red-600" />
+                  Фильтры и поиск
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
-                <div className="flex items-start space-x-2 text-sm bg-gray-50 p-3 rounded-lg">
-                  <Icon name="MessageSquare" className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-gray-700 line-clamp-2">{appointment.complaints}</p>
+              <CardContent>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Icon name="Search" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      placeholder="Поиск по ФИО, врачу или специальности..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10"
+                    />
+                  </div>
+                  <Tabs value={filterStatus} onValueChange={setFilterStatus} className="w-full md:w-auto">
+                    <TabsList>
+                      <TabsTrigger value="all">Все</TabsTrigger>
+                      <TabsTrigger value="pending">Новые</TabsTrigger>
+                      <TabsTrigger value="accepted">Принятые</TabsTrigger>
+                      <TabsTrigger value="in-progress">На приёме</TabsTrigger>
+                      <TabsTrigger value="completed">Завершённые</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
               </CardContent>
-              <CardFooter className="bg-gradient-to-r from-gray-50 to-blue-50/30 border-t">
-                <div className="flex items-center justify-between w-full text-sm text-gray-600">
-                  <div className="flex items-center space-x-4">
-                    <span className="flex items-center">
-                      <Icon name="IdCard" className="w-4 h-4 mr-1 text-purple-500" />
-                      {appointment.passport}
-                    </span>
-                    <span className="flex items-center">
-                      <Icon name="Phone" className="w-4 h-4 mr-1 text-green-500" />
-                      {appointment.phone}
+            </Card>
+
+            <div className="grid gap-4">
+              {filteredAppointments.map((appointment) => (
+                <Card key={appointment.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CardTitle className="text-lg">{appointment.fullName}</CardTitle>
+                          {appointment.isChild && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              <Icon name="Baby" className="w-3 h-3 mr-1" />
+                              Ребёнок
+                            </Badge>
+                          )}
+                          {getStatusBadge(appointment.status)}
+                        </div>
+                        <CardDescription className="flex flex-wrap items-center gap-4 text-sm">
+                          <span className="flex items-center">
+                            <Icon name="User" className="w-4 h-4 mr-1" />
+                            {appointment.doctor}
+                          </span>
+                          <span className="flex items-center">
+                            <Icon name="Stethoscope" className="w-4 h-4 mr-1" />
+                            {appointment.specialty}
+                          </span>
+                          <span className="flex items-center">
+                            <Icon name="Calendar" className="w-4 h-4 mr-1" />
+                            {new Date(appointment.date).toLocaleDateString('ru-RU')} в {appointment.time}
+                          </span>
+                        </CardDescription>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedAppointment(appointment)}>
+                            <Icon name="Eye" className="w-4 h-4 mr-2" />
+                            Подробнее
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              Карточка записи #{appointment.id}
+                              {getStatusBadge(appointment.status)}
+                            </DialogTitle>
+                            <DialogDescription>
+                              Полная информация о записи пациента
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          <div className="space-y-6">
+                            <div>
+                              <h3 className="font-semibold mb-3 flex items-center text-gray-900">
+                                <Icon name="User" className="w-5 h-5 mr-2 text-red-600" />
+                                Данные пациента
+                              </h3>
+                              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                <div>
+                                  <Label className="text-gray-600">ФИО</Label>
+                                  <p className="font-medium">{appointment.fullName}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-gray-600">Паспорт</Label>
+                                  <p className="font-medium">{appointment.passport}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-gray-600">Возраст</Label>
+                                  <p className="font-medium">{appointment.age} {appointment.isChild ? 'лет' : 'года'}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-gray-600">Телефон</Label>
+                                  <p className="font-medium">{appointment.phone}</p>
+                                </div>
+                                <div className="col-span-2">
+                                  <Label className="text-gray-600">Категория</Label>
+                                  <p className="font-medium">
+                                    {appointment.isChild ? '👶 Детский приём' : '👤 Взрослый приём'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                              <h3 className="font-semibold mb-3 flex items-center text-gray-900">
+                                <Icon name="Stethoscope" className="w-5 h-5 mr-2 text-red-600" />
+                                Информация о приёме
+                              </h3>
+                              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                <div>
+                                  <Label className="text-gray-600">Врач</Label>
+                                  <p className="font-medium">{appointment.doctor}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-gray-600">Специальность</Label>
+                                  <p className="font-medium">{appointment.specialty}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-gray-600">Дата</Label>
+                                  <p className="font-medium">{new Date(appointment.date).toLocaleDateString('ru-RU')}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-gray-600">Время</Label>
+                                  <p className="font-medium">{appointment.time}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                              <h3 className="font-semibold mb-3 flex items-center text-gray-900">
+                                <Icon name="FileText" className="w-5 h-5 mr-2 text-red-600" />
+                                Жалобы пациента
+                              </h3>
+                              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                <p className="text-gray-900">{appointment.complaints}</p>
+                              </div>
+                            </div>
+
+                            {appointment.diagnosis && (
+                              <>
+                                <Separator />
+                                <div>
+                                  <h3 className="font-semibold mb-3 flex items-center text-gray-900">
+                                    <Icon name="Clipboard" className="w-5 h-5 mr-2 text-red-600" />
+                                    Диагноз
+                                  </h3>
+                                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                    <p className="text-gray-900">{appointment.diagnosis}</p>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {appointment.recommendations && (
+                              <>
+                                <Separator />
+                                <div>
+                                  <h3 className="font-semibold mb-3 flex items-center text-gray-900">
+                                    <Icon name="Pill" className="w-5 h-5 mr-2 text-red-600" />
+                                    Рекомендации
+                                  </h3>
+                                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                                    <p className="text-gray-900">{appointment.recommendations}</p>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            <Separator />
+
+                            <div className="flex gap-2">
+                              {appointment.status === 'pending' && (
+                                <>
+                                  <Button
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    onClick={() => updateAppointmentStatus(appointment.id, 'accepted')}
+                                  >
+                                    <Icon name="CheckCircle" className="w-4 h-4 mr-2" />
+                                    Принять заявку
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    className="flex-1"
+                                    onClick={() => updateAppointmentStatus(appointment.id, 'rejected')}
+                                  >
+                                    <Icon name="XCircle" className="w-4 h-4 mr-2" />
+                                    Отклонить
+                                  </Button>
+                                </>
+                              )}
+                              {appointment.status === 'accepted' && (
+                                <Button
+                                  className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+                                  onClick={() => updateAppointmentStatus(appointment.id, 'in-progress')}
+                                >
+                                  <Icon name="Activity" className="w-4 h-4 mr-2" />
+                                  Начать приём
+                                </Button>
+                              )}
+                              {appointment.status === 'in-progress' && (
+                                <Button
+                                  className="flex-1 bg-gray-600 hover:bg-gray-700"
+                                  onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
+                                >
+                                  <Icon name="CheckCheck" className="w-4 h-4 mr-2" />
+                                  Завершить приём
+                                </Button>
+                              )}
+                              {appointment.status === 'completed' && (
+                                <div className="flex-1 text-center text-green-600 font-medium py-2">
+                                  <Icon name="CheckCheck" className="w-5 h-5 inline mr-2" />
+                                  Приём завершён
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-start space-x-2 text-sm">
+                      <Icon name="MessageSquare" className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <p className="text-gray-600 line-clamp-2">{appointment.complaints}</p>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-gray-50 border-t">
+                    <div className="flex items-center justify-between w-full text-sm text-gray-600">
+                      <div className="flex items-center space-x-4">
+                        <span className="flex items-center">
+                          <Icon name="IdCard" className="w-4 h-4 mr-1" />
+                          {appointment.passport}
+                        </span>
+                        <span className="flex items-center">
+                          <Icon name="Phone" className="w-4 h-4 mr-1" />
+                          {appointment.phone}
+                        </span>
+                      </div>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+
+            {filteredAppointments.length === 0 && (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <Icon name="FileSearch" className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Записи не найдены</h3>
+                  <p className="text-gray-600">Попробуйте изменить фильтры или поисковый запрос</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {activeSection === 'doctors' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Наши врачи</h2>
+              <p className="text-gray-600">Список всех специалистов медицинского центра</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {doctors.map((doctor) => (
+                <Card key={doctor.id} className="hover:shadow-xl transition-all hover:-translate-y-1">
+                  <CardHeader>
+                    <div className="flex items-center space-x-4 mb-4">
+                      <Avatar className="w-16 h-16 ring-2 ring-red-500">
+                        <AvatarFallback className="bg-red-100 text-red-700 text-xl font-bold">
+                          {doctor.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{doctor.name}</CardTitle>
+                        <CardDescription>{doctor.specialty}</CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">{doctor.experience}</Badge>
+                      <div className="flex items-center text-yellow-500">
+                        <Icon name="Star" className="w-4 h-4 fill-yellow-500 mr-1" />
+                        <span className="text-sm font-semibold text-gray-900">{doctor.rating}</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Принято пациентов</span>
+                      <span className="font-semibold text-gray-900">{doctor.patients}</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Icon name="Clock" className="w-4 h-4 mr-2 text-red-600" />
+                      <span className="text-gray-600">{doctor.schedule}</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" className="w-full">
+                      <Icon name="Calendar" className="w-4 h-4 mr-2" />
+                      Расписание
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeSection === 'statistics' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Статистика</h2>
+              <p className="text-gray-600">Аналитика работы медицинского центра</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Icon name="Users" className="w-5 h-5 mr-2 text-red-600" />
+                    Пациенты
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Всего записей</span>
+                    <span className="text-2xl font-bold text-gray-900">{stats.total}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Взрослые</span>
+                    <span className="text-xl font-semibold text-gray-700">
+                      {appointments.filter(a => !a.isChild).length}
                     </span>
                   </div>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Дети</span>
+                    <span className="text-xl font-semibold text-gray-700">
+                      {appointments.filter(a => a.isChild).length}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {filteredAppointments.length === 0 && (
-          <Card className="text-center py-16 border-0 shadow-lg bg-gradient-to-br from-gray-50 to-blue-50">
-            <CardContent>
-              <Icon name="FileSearch" className="w-20 h-20 mx-auto text-blue-300 mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Записи не найдены</h3>
-              <p className="text-gray-600">Попробуйте изменить фильтры или поисковый запрос</p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Icon name="Activity" className="w-5 h-5 mr-2 text-red-600" />
+                    Статусы
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-600">Новые</span>
+                      <span className="font-semibold">{stats.pending} ({Math.round(stats.pending / stats.total * 100)}%)</span>
+                    </div>
+                    <Progress value={stats.pending / stats.total * 100} className="h-2" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-600">Принятые</span>
+                      <span className="font-semibold">{stats.accepted} ({Math.round(stats.accepted / stats.total * 100)}%)</span>
+                    </div>
+                    <Progress value={stats.accepted / stats.total * 100} className="h-2" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-600">Завершённые</span>
+                      <span className="font-semibold">{stats.completed} ({Math.round(stats.completed / stats.total * 100)}%)</span>
+                    </div>
+                    <Progress value={stats.completed / stats.total * 100} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Icon name="TrendingUp" className="w-5 h-5 mr-2 text-red-600" />
+                    Эффективность
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <p className="text-5xl font-bold text-red-600">
+                      {Math.round((stats.accepted + stats.completed) / stats.total * 100)}%
+                    </p>
+                    <p className="text-gray-600 mt-2">Обработано</p>
+                  </div>
+                  <Separator />
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-green-600">
+                      {Math.round(stats.completed / stats.total * 100)}%
+                    </p>
+                    <p className="text-gray-600 mt-1">Завершено</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Icon name="Stethoscope" className="w-5 h-5 mr-2 text-red-600" />
+                  Распределение по специальностям
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(
+                    appointments.reduce((acc, apt) => {
+                      acc[apt.specialty] = (acc[apt.specialty] || 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  ).map(([specialty, count]) => (
+                    <div key={specialty} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold text-gray-900">{specialty}</p>
+                        <Badge variant="outline">{count}</Badge>
+                      </div>
+                      <Progress value={(count / appointments.length) * 100} className="h-2" />
+                      <p className="text-xs text-gray-500 mt-2">
+                        {Math.round((count / appointments.length) * 100)}% от общего числа
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>
